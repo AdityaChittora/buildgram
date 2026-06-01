@@ -1,0 +1,7 @@
+# Compiled binary
+buildgram
+buildgram.exe
+
+# OS
+.DS_Store
+Thumbs.db
