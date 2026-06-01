@@ -17,7 +17,7 @@ type UserHandler struct {
 // createUserRequest is the expected request body for POST /api/v1/users.
 type createUserRequest struct {
 	Username string  `json:"username" binding:"required"`
-	Email    string  `json:"email"    binding:"required"`
+	Email    string  `json:"email"    binding:"required,email"`
 	Bio      *string `json:"bio"` // optional — pointer so absence is distinguishable from empty string
 }
 
@@ -26,15 +26,23 @@ type createUserRequest struct {
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	var req createUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		badRequest(c, "invalid request body: username and email are required")
+		badRequest(c, "invalid request body: username is required, and email must be a valid email address")
 		return
 	}
 
-	user := h.Store.CreateUser(models.User{
+	user, err := h.Store.CreateUser(models.User{
 		Username: req.Username,
 		Email:    req.Email,
 		Bio:      req.Bio,
 	})
+	if err != nil {
+		if err == store.ErrUsernameTaken || err == store.ErrEmailTaken {
+			errorResponse(c, http.StatusConflict, err.Error())
+			return
+		}
+		errorResponse(c, http.StatusInternalServerError, "failed to create user")
+		return
+	}
 
 	successResponse(c, http.StatusCreated, user)
 }

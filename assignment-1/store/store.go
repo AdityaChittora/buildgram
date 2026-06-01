@@ -32,15 +32,25 @@ func New() *Store {
 
 // ---------- User operations ----------
 
-// CreateUser adds a new user to the store and returns it with its assigned ID.
-func (s *Store) CreateUser(u models.User) models.User {
+// CreateUser adds a new user to the store. It returns the created user,
+// or an error if the username or email is already taken.
+func (s *Store) CreateUser(u models.User) (models.User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	for _, existing := range s.users {
+		if existing.Username == u.Username {
+			return models.User{}, ErrUsernameTaken
+		}
+		if existing.Email == u.Email {
+			return models.User{}, ErrEmailTaken
+		}
+	}
 
 	u.ID = s.nextUserID
 	s.nextUserID++
 	s.users[u.ID] = u
-	return u
+	return u, nil
 }
 
 // GetUserByID returns the user with the given ID and a boolean indicating
