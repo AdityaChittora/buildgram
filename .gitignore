@@ -1,6 +1,7 @@
 # Compiled binary
 buildgram
 buildgram.exe
+github_token.txt
 
 # OS
 .DS_Store
